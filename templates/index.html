@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mnnnnm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;1,300&family=Noto+Sans+KR:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #fff;
+    color: #111;
+    font-family: 'Noto Sans KR', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    padding: 2.8rem 3rem 0;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+
+  .title {
+    font-family: 'DM Mono', monospace;
+    font-weight: 300;
+    font-size: clamp(2rem, 6vw, 3.8rem);
+    letter-spacing: -0.03em;
+    color: #111;
+  }
+
+  .date {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 300;
+    color: #bbb;
+    letter-spacing: 0.04em;
+  }
+
+  .divider {
+    margin: 2rem 3rem 0;
+    height: 1px;
+    background: #e8e8e8;
+  }
+
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 1.5rem;
+  }
+
+  .search-wrap {
+    width: 100%;
+    max-width: 420px;
+    position: relative;
+  }
+
+  .search-input {
+    width: 100%;
+    border: none;
+    border-bottom: 1.5px solid #111;
+    padding: 0.6rem 2.5rem 0.6rem 0;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 300;
+    color: #111;
+    background: transparent;
+    outline: none;
+  }
+
+  .search-input::placeholder {
+    color: #ccc;
+    font-weight: 300;
+  }
+
+  .search-btn {
+    position: absolute;
+    right: 0;
+    bottom: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    color: #111;
+    display: flex;
+    align-items: center;
+    opacity: 0.4;
+    transition: opacity 0.15s;
+  }
+
+  .search-btn:hover { opacity: 1; }
+
+  .search-btn svg {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .result-area {
+    width: 100%;
+    max-width: 420px;
+    margin-top: 3rem;
+  }
+
+  .result-card {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 1rem 0;
+    border-bottom: 1px solid #f0f0f0;
+    animation: fade-up 0.2s ease;
+  }
+
+  .result-card:first-child { border-top: 1px solid #f0f0f0; }
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(5px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .r-name {
+    font-size: 0.95rem;
+    font-weight: 400;
+    color: #111;
+  }
+
+  .r-location {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 300;
+    color: #999;
+  }
+
+  .r-location strong {
+    color: #111;
+    font-weight: 400;
+  }
+
+  .msg {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 300;
+    color: #ccc;
+    text-align: center;
+    padding: 1rem 0;
+    animation: fade-up 0.2s ease;
+  }
+
+  .msg.error { color: #e57373; }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="title">mnnnnm</span>
+  <span class="date">updated on March 20 / ryul</span>
+</header>
+<div class="divider"></div>
+
+<main>
+  <div class="search-wrap">
+    <input
+      type="text"
+      class="search-input"
+      id="nameInput"
+      placeholder="이름"
+      autocomplete="off"
+    >
+    <button class="search-btn" onclick="doSearch()" aria-label="검색">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/></svg>
+    </button>
+  </div>
+
+  <div class="result-area" id="resultArea"></div>
+</main>
+
+<script>
+  document.getElementById('nameInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doSearch();
+  });
+
+  async function doSearch() {
+    const name = document.getElementById('nameInput').value.trim();
+    if (!name) return;
+    const area = document.getElementById('resultArea');
+    area.innerHTML = '';
+    try {
+      const res  = await fetch(`/search?name=${encodeURIComponent(name)}`);
+      const data = await res.json();
+      if (data.error) {
+        area.innerHTML = `<div class="msg error">${data.error}</div>`;
+        return;
+      }
+      area.innerHTML = data.results.map(r => `
+        <div class="result-card">
+          <span class="r-name">${r.name}</span>
+          <span class="r-location"><strong>${r.ho}</strong>&nbsp;&nbsp;${r.floor}F</span>
+        </div>
+      `).join('');
+    } catch {
+      area.innerHTML = '<div class="msg error">error</div>';
+    }
+  }
+</script>
+</body>
+</html>
