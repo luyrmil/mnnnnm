@@ -4,7 +4,7 @@ import numpy as np
 app = Flask(__name__)
 
 arr = np.array(
-    [[{"이름": [], "호": None} for _ in range(37)] for _ in range(5)],
+    [[{"이름": [], "호": None} for _ in range(38)] for _ in range(5)],
     dtype=object
 )
 
@@ -170,7 +170,7 @@ for i in range(5):
 def find_p(name):
     results = []
     for i in range(5):
-        for j in range(37):
+        for j in range(38):
             if name in arr[i][j]["이름"]:
                 ho = arr[i][j]["호"]
                 floor = i + 1
