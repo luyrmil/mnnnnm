@@ -1,6 +1,6 @@
-import sqlite3
+import sqlite3, os
 
-
+DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data.db')
 f1data = [
     ("1001(소재분석센터)", ["구석본", "전준미"]),
     ("1016/1017(FE-TEM실)", ["FE-TEM실"]),
@@ -154,53 +154,49 @@ f5data = [
 ]
 
 datalist = [f1data, f2data, f3data, f4data, f5data]
-#DB create
 
-conn = sqlite3.connect("data.db")
-cur = conn.cursor()
 
-cur.executescript("""
-DROP TABLE IF EXISTS people;
-DROP TABLE IF EXISTS rooms;
-DROP TABLE IF EXISTS room_people;
+def init():
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
 
-CREATE TABLE people (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT UNIQUE
-);
+    # 이미 초기화되어 있으면 스킵
+    cur.execute("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='people'")
+    if cur.fetchone()[0] > 0:
+        conn.close()
+        return
 
-CREATE TABLE rooms (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    ho TEXT,
-    floor INTEGER
-);
+    cur.executescript("""
+    CREATE TABLE people (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT UNIQUE
+    );
+    CREATE TABLE rooms (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ho TEXT,
+        floor INTEGER
+    );
+    CREATE TABLE room_people (
+        room_id INTEGER,
+        person_id INTEGER
+    );
+    """)
 
-CREATE TABLE room_people (
-    room_id INTEGER,
-    person_id INTEGER
-);
-""")
+    for floor_idx, floor_data in enumerate(datalist):
+        floor = floor_idx + 1
+        for ho, names in floor_data:
+            cur.execute("INSERT INTO rooms (ho, floor) VALUES (?, ?)", (ho, floor))
+            room_id = cur.lastrowid
+            for name in names:
+                cur.execute("INSERT OR IGNORE INTO people (name) VALUES (?)", (name,))
+                cur.execute("SELECT id FROM people WHERE name = ?", (name,))
+                person_id = cur.fetchone()[0]
+                cur.execute("INSERT INTO room_people (room_id, person_id) VALUES (?, ?)", (room_id, person_id))
 
-# -------------------------------
-# 🔹 데이터 삽입
-# -------------------------------
-for floor_idx, floor_data in enumerate(datalist):
-    floor = floor_idx + 1
+    conn.commit()
+    conn.close()
 
-    for ho, names in floor_data:
-        cur.execute("INSERT INTO rooms (ho, floor) VALUES (?, ?)", (ho, floor))
-        room_id = cur.lastrowid
 
-        for name in names:
-            cur.execute("INSERT OR IGNORE INTO people (name) VALUES (?)", (name,))
-            cur.execute("SELECT id FROM people WHERE name = ?", (name,))
-            person_id = cur.fetchone()[0]
-
-            cur.execute(
-                "INSERT INTO room_people (room_id, person_id) VALUES (?, ?)",
-                (room_id, person_id)
-            )
-
-conn.commit()
-conn.close()
+if __name__ == "__main__":
+    init()
 
