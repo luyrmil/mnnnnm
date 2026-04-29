@@ -1,3 +1,4 @@
+import os
 from flask import Flask, request, jsonify, render_template
 from db import find_person
 
@@ -21,5 +22,5 @@ def search():
     return jsonify({"results": results, "error": None})
 
 
-if __name__ == "__main__":
-    app.run(debug=True)
+if __name__ == "__main__":  
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
