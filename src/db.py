@@ -3,7 +3,7 @@ import sqlite3
 DB_PATH = "data.db"
 
 def get_db():
-    conn = sqlite3.conect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -19,7 +19,7 @@ def find_person(name):
     WHERE p.name LIKE ? 
     """
     
-    cur.execute(query, (f"%{name}%"))
+    cur.execute(query, (f"%{name}%",))
     rows = cur.fetchall()
     
     results = [
