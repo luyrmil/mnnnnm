@@ -1,6 +1,6 @@
-import sqlite3
+import sqlite3, os
 
-DB_PATH = "data.db"
+DB_PATH = os.path.join(os.path.dirname(__file__), '..', 'data.db')
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
@@ -10,25 +10,16 @@ def get_db():
 def find_person(name):
     conn = get_db()
     cur = conn.cursor()
-    
     query = """
     SELECT p.name, r.ho, r.floor
     FROM people p
     JOIN room_people rp ON p.id = rp.person_id
     JOIN rooms r ON rp.room_id = r.id
-    WHERE p.name LIKE ? 
+    WHERE p.name LIKE ?
     """
-    
     cur.execute(query, (f"%{name}%",))
     rows = cur.fetchall()
-    
-    results = [
-        {"name": row["name"], "ho": row["ho"], "floor": row["floor"]}
-        for row in rows
-    ]
-    
     conn.close()
-    return results
-
+    return [{"name": row["name"], "ho": row["ho"], "floor": row["floor"]} for row in rows]
 
     
